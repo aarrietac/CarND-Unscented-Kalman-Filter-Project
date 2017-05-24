@@ -10,6 +10,11 @@ Tools::Tools() {}
 
 Tools::~Tools() {}
 
+double Tools::NormRad(double *angle) {
+  while (*angle >  M_PI) *angle -= 2*M_PI;
+  while (*angle < -M_PI) *angle += 2*M_PI;
+}
+
 VectorXd Tools::CalculateRMSE(const vector<VectorXd> &estimations,
                               const vector<VectorXd> &ground_truth) {
   /**

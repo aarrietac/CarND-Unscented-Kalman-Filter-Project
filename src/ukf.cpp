@@ -170,6 +170,9 @@ void UKF::Prediction(double delta_t) {
   vector, x_. Predict sigma points, the state, and the state covariance matrix.
   */
 
+  // import tools for angle normalization
+  Tools tools;
+
   //create augmented mean vector
   VectorXd x_aug = VectorXd::Zero(n_aug_);
   x_aug.head(n_x_) = x_;
@@ -248,8 +251,7 @@ void UKF::Prediction(double delta_t) {
     VectorXd x_diff = Xsig_pred_.col(i) - x_;
 
     // angle normalization
-    while (x_diff(3) >  M_PI) x_diff(3) -= 2*M_PI;
-    while (x_diff(3) < -M_PI) x_diff(3) += 2*M_PI;
+    tools.NormRad(&(x_diff(3)));
 
     P_ = P_ + weights_(i)*x_diff*x_diff.transpose();
   }
@@ -334,6 +336,10 @@ void UKF::UpdateRadar(MeasurementPackage meas_package) {
  * @param {int} n_z
  */
 void UKF::UpdatePX(MeasurementPackage meas_package, MatrixXd Zsig, int n_z) {
+
+  // import tools for angle normalization
+  Tools tools;
+
   // mean predicted state vector from sigma points
   VectorXd z_pred = Zsig * weights_;
 
@@ -343,8 +349,7 @@ void UKF::UpdatePX(MeasurementPackage meas_package, MatrixXd Zsig, int n_z) {
       VectorXd z_diff = Zsig.col(i) - z_pred;
 
       // normalize yaw angle
-      while (z_diff(1) >  M_PI) z_diff(1) -= 2*M_PI;
-      while (z_diff(1) < -M_PI) z_diff(1) += 2*M_PI;
+      tools.NormRad(&(z_diff(1)));
 
       S = S + weights_(i)*z_diff*z_diff.transpose();
   }
@@ -370,10 +375,8 @@ void UKF::UpdatePX(MeasurementPackage meas_package, MatrixXd Zsig, int n_z) {
       z_diff = Zsig.col(i) - z_pred;
 
       // normalize yaw angle
-      while (x_diff(3) >  M_PI) x_diff(3) -= 2*M_PI;
-      while (x_diff(3) < -M_PI) x_diff(3) += 2*M_PI;
-      while (z_diff(1) >  M_PI) z_diff(1) -= 2*M_PI;
-      while (z_diff(1) < -M_PI) z_diff(1) += 2*M_PI;
+      tools.NormRad(&(x_diff(3)));
+      tools.NormRad(&(z_diff(1)));
 
       Tc = Tc + weights_(i)*x_diff*z_diff.transpose();
   }
@@ -388,8 +391,7 @@ void UKF::UpdatePX(MeasurementPackage meas_package, MatrixXd Zsig, int n_z) {
   // normalize yaw angle if necessary
   z_diff = z - z_pred;
   if (meas_package.sensor_type_ == MeasurementPackage::RADAR) {
-    while (z_diff(1) >  M_PI) z_diff(1) -= 2*M_PI;
-    while (z_diff(1) < -M_PI) z_diff(1) += 2*M_PI;
+    tools.NormRad(&(z_diff(1)));
   }
 
   // update state mean and covariance matrix
