@@ -236,10 +236,8 @@ void UKF::Prediction(double delta_t) {
   }
 
   //set weights
+  weights_.fill(0.5/(lambda_ + n_aug_));
   weights_(0) = lambda_/(lambda_ + n_aug_);
-  for (int i = 0; i < 2*n_aug_; i++){
-    weights_(i+1) = 0.5/(lambda_ + n_aug_);
-  }
 
   //predict state mean (vectorial form)
   x_ = Xsig_pred_ * weights_;
@@ -274,13 +272,9 @@ void UKF::UpdateLidar(MeasurementPackage meas_package) {
   int n_z = n_laser_;
 
   //create matrix for sigma points in measurement space
-  MatrixXd Zsig = MatrixXd(n_z, n_sig_);
+  MatrixXd Zsig = Xsig_pred_.block(0, 0, n_z, n_sig_);
 
-  for (int i = 0; i < 2*n_aug_ + 1; i++){
-      Zsig.col(i)(0) = Xsig_pred_.col(i)(0);
-      Zsig.col(i)(1) = Xsig_pred_.col(i)(1);
-  }
-
+  // update state vector and covariance state matrix
   UpdatePX(meas_package, Zsig, n_z);
 }
 
@@ -305,22 +299,31 @@ void UKF::UpdateRadar(MeasurementPackage meas_package) {
 
   //transform sigma points into measurement space
   for (int i = 0; i < 2*n_aug_ + 1; i++){
-      double px = Xsig_pred_.col(i)(0);
-      double py = Xsig_pred_.col(i)(1);
-      double v = Xsig_pred_.col(i)(2);
-      double yaw = Xsig_pred_.col(i)(3);
+    double px = Xsig_pred_.col(i)(0);
+    double py = Xsig_pred_.col(i)(1);
+    double v = Xsig_pred_.col(i)(2);
+    double yaw = Xsig_pred_.col(i)(3);
 
-      double rho = sqrt(px*px + py*py);
-      if (rho < 0.001){
-          cout << "Error: division by zero" << endl;
-          break;
-      }
+    // compute rho
+    double rho = sqrt(px*px + py*py);
+    if (rho < 0.001){
+      cout << "Error: division by zero" << endl;
+      break;
+    }
+    Zsig.col(i)(0) = rho;
 
-      Zsig.col(i)(0) = rho;
+    // compute phi angle
+    if (fabs(px) < 0.001 && fabs(py) > 0.001){
+      Zsig.col(i)(1) = atan2(py, 0);
+    } else{
       Zsig.col(i)(1) = atan2(py, px);
-      Zsig.col(i)(2) = (px*cos(yaw) + py*sin(yaw))*v/rho;
+    }
+
+    // compute rho_dot
+    Zsig.col(i)(2) = (px*cos(yaw) + py*sin(yaw))*v/rho;
   }
 
+  // update state vector and covariance state matrix
   UpdatePX(meas_package, Zsig, n_z);
 }
 
