@@ -29,6 +29,9 @@ public:
   ///* state covariance matrix
   MatrixXd P_;
 
+  //* process noise covariance matrix
+  MatrixXd Q_;
+
   ///* predicted sigma points matrix
   MatrixXd Xsig_pred_;
 
@@ -65,8 +68,14 @@ public:
   ///* Augmented state dimension
   int n_aug_;
 
+  ///* Process noise variables
+  int n_noise_;
+
   ///* Sigma point spreading parameter
   double lambda_;
+
+  //* Total number of sigma points
+  int n_sig_;
 
   ///* the current NIS for radar
   double NIS_radar_;
