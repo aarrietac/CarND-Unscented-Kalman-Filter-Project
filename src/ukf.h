@@ -74,6 +74,18 @@ public:
   ///* the current NIS for laser
   double NIS_laser_;
 
+  ///* RADAR measurement noise covariance matrix
+  MatrixXd R_radar_;
+
+  ///* LASER measurement noise covariance matrix
+  MatrixXd R_laser_;
+
+  ///* RADAR space dimension
+  int n_radar_;
+
+  ///* LASER space dimension
+  int n_laser_;
+
   /**
    * Constructor
    */
@@ -108,6 +120,14 @@ public:
    * @param meas_package The measurement at k+1
    */
   void UpdateRadar(MeasurementPackage meas_package);
+
+  /**
+   * Compute matrices and vectors to update the state and the state covariance
+   * @param {MeasurementPackage} meas_package
+   * @param {MatrixXd} Zsig
+   * @param {int} n_z
+   */
+  void UpdatePX(MeasurementPackage meas_package, MatrixXd Zsig, int n_z);
 };
 
 #endif /* UKF_H */
